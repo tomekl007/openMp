@@ -12,7 +12,29 @@
 
 using namespace std;
 
+
+void show( drand48_data *d ) {
+#pragma omp critical 
+{
+   cout << "__x[0] = " << d->__x[0] << endl;
+   cout << "__x[1] = " << d->__x[1] << endl;
+   cout << "__x[2] = " << d->__x[2] << endl;
+   
+   cout << "__old_x[0] = " << d->__old_x[0] << endl;
+   cout << "__old_x[1] = " << d->__old_x[1] << endl;
+   cout << "__old_x[2] = " << d->__old_x[2] << endl;
+   
+   cout << "__c    = " << d->__c << endl;
+   cout << "__init = " << d->__init << endl;
+   cout << "__a    = " << d->__a << endl;
+} // critical
+}
+
 void Simulation::init( void ) {
+	double randResult;
+ 	struct drand48_data randBuffer;
+ 	srand48_r(time(NULL), &randBuffer );
+
 	angle = new double* [ size ];
 	angleNew = new double* [ size ];
 	for ( int i = 0; i < size; i++ ) {
@@ -20,10 +42,20 @@ void Simulation::init( void ) {
 		angleNew[ i ] = new double[ size ];
 	}
 
-	srand48_r( 12345L );
+	
+	//it will execute as many times as OMP_NUM_THREADS={nrOfTimes}
+	#pragma omp parallel firstprivate( randBuffer )
+	{
+	   show( &randBuffer );
+	} // parallel
+
 	for ( int i = 0; i < size; i++ )
-		for ( int j = 0; j < size; j++ )
-			angle[ i ][ j ] = ( 2.0 * drand48_r() - 1.0 ) * M_PI; // od -pi do +pi
+		for ( int j = 0; j < size; j++ ){
+			double randResult;
+ 			struct drand48_data randBuffer;
+ 			srand48_r(time(NULL), &randBuffer );
+			angle[ i ][ j ] = ( 2.0 * randResult - 1.0 ) * M_PI; // od -pi do +pi
+		}
 
 	next = new int[ size ];
 	previous = new int[ size ];
@@ -49,7 +81,11 @@ void Simulation::copyNewArray() {
 }
 
 bool Simulation::useNew( double p ) {
-	if ( drand48_r() < p ) return true; //todo change to drand48_r
+	double randResult;
+ 	struct drand48_data randBuffer;
+ 	srand48_r(time(NULL), &randBuffer );
+ 	drand48_r(&randBuffer, &randResult);
+ 	if ( randResult < p ) return true;
 	return false;
 }
 
