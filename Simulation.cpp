@@ -146,6 +146,8 @@ void Simulation::calcAngleHistogram( int bins ) {
 
 	int bin;
 	int mult;
+	int i,j;
+	#pragma omp parallel for schedule( dynamic ) private(i,j)
 	for ( int i = 0; i < size; i++ )
 		for ( int j = 0; j < size; j++ ) {
 			mult = (int)( angle[ i ][ j ] / pi2 );
