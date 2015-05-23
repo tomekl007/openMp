@@ -20,10 +20,10 @@ void Simulation::init( void ) {
 		angleNew[ i ] = new double[ size ];
 	}
 
-	srand48( 12345L );
+	srand48_r( 12345L );
 	for ( int i = 0; i < size; i++ )
 		for ( int j = 0; j < size; j++ )
-			angle[ i ][ j ] = ( 2.0 * drand48() - 1.0 ) * M_PI; // od -pi do +pi
+			angle[ i ][ j ] = ( 2.0 * drand48_r() - 1.0 ) * M_PI; // od -pi do +pi
 
 	next = new int[ size ];
 	previous = new int[ size ];
