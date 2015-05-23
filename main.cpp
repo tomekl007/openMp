@@ -17,21 +17,6 @@ const int HISTOGRAM_WIDTH = 100;
 const int FIELD_DIRECTION = M_PI;
 
 
-
-void show( struct timeval *ti ) {
-  struct timeval tf;
-  static double last = 0.0;
-  gettimeofday( &tf, NULL );
-  double now = tf.tv_sec + tf.tv_usec * 0.000001;
-  double ini = ti->tv_sec - ti->tv_usec * 0.000001;
-  if ( last > 0.0 )
-     printf( "--- Time report: %8.5lf ( + %09.6lf )\n", now - ini , now - last ); 
-  else
-     printf( "--- Time report: %8.5lf ( + %09.6lf )\n", now - ini , now - ini ); 
-  last = now;
-} 
-
-
 void showHistogram(long *h, int size, int width) {
 	long max = h[0];
 	for (int i = 1; i < size; i++)
@@ -60,10 +45,7 @@ void showHistogram(long *h, int size, int width) {
 
 int main(void) {
 
-  	struct timeval ti;
-  	gettimeofday( &ti, NULL );
-
-
+  	
 	Physics *ph = new Physics(1.0, 15.0, FIELD_DIRECTION );
 
 	Simulation *sm = new Simulation( SIZE );
@@ -72,6 +54,7 @@ int main(void) {
 
 	double temperature = 101;
 	long *hPointer;
+	#pragma omp parallel for schedule( static, 5 )
 	for (int i = 0; i < REPETITIONS; i++) {
 		temperature -= 5;
 		cout << "Temperatura ........................................ "
@@ -94,9 +77,6 @@ int main(void) {
 		showHistogram( hPointer, HISTOGRAM_BINS, HISTOGRAM_WIDTH );
 		cout << endl;
 	}
-
-	 show( &ti ); 
-
 	return 0;
 }
 
