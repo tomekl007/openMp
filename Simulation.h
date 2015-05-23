@@ -23,7 +23,7 @@ private:
 	double averageAngle;
 
 	void copyNewArray();
-	bool useNew( double p );
+	bool useNew( double p,  struct drand48_data randBuffer );
 	void init( void );
 	const int size;
 public:

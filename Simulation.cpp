@@ -44,22 +44,25 @@ void Simulation::init( void ) {
 
 	
 	//it will execute as many times as OMP_NUM_THREADS={nrOfTimes}
-	#pragma omp parallel firstprivate( randBuffer )
-	{
-	   show( &randBuffer );
-	} // parallel
+	// #pragma omp parallel firstprivate( randBuffer )
+	// {
+	//    show( &randBuffer );
+	// } // parallel
 
-	for ( int i = 0; i < size; i++ )
+
+
+ 	#pragma omp parallel for schedule( dynamic ) private(randBuffer)
+ 	for ( int i = 0; i < size; i++ )
 		for ( int j = 0; j < size; j++ ){
 			double randResult;
- 			struct drand48_data randBuffer;
- 			srand48_r(time(NULL), &randBuffer );
+ 			drand48_r(&randBuffer, &randResult);
 			angle[ i ][ j ] = ( 2.0 * randResult - 1.0 ) * M_PI; // od -pi do +pi
 		}
 
 	next = new int[ size ];
 	previous = new int[ size ];
 
+ 	#pragma omp parallel for schedule( static ) private(randBuffer)
 	for ( int i = 1; i < size - 1; i++ ) {
 		next[ i ] = i + 1;
 		previous[ i ] = i - 1;
@@ -80,10 +83,8 @@ void Simulation::copyNewArray() {
 			angle[ i ][ j ] = angleNew[ i ][ j ];
 }
 
-bool Simulation::useNew( double p ) {
+bool Simulation::useNew( double p, struct drand48_data randBuffer) {
 	double randResult;
- 	struct drand48_data randBuffer;
- 	srand48_r(time(NULL), &randBuffer );
  	drand48_r(&randBuffer, &randResult);
  	if ( randResult < p ) return true;
 	return false;
@@ -98,8 +99,11 @@ void Simulation::setPhysics( Physics *_ph ) {
 }
 
 void Simulation::calc( int steps ) {
+	struct drand48_data randBuffer;
+ 	srand48_r(time(NULL), &randBuffer );
 	double a1, a2, a3, a4;
 	double aNew;
+	#pragma omp parallel for schedule( static ) private(randBuffer)
 	for ( int k = 0; k < steps; k++ ) {
 		for ( int i = 0; i < size; i++ )
 			for ( int j = 0; j < size; j++ ) {
@@ -107,8 +111,10 @@ void Simulation::calc( int steps ) {
 				a2 = angle[ next[ i ] ][ j ];
 				a3 = angle[ i ][ previous[ j ] ];
 				a4 = angle[ i ][ next[ j ] ];
-				aNew = angle[ i ][ j ] + ( drand48() - 0.5 );
-				if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ) ) ) {
+				double randResult;
+				drand48_r(&randBuffer, &randResult);
+				aNew = angle[ i ][ j ] + ( randResult - 0.5 );
+				if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ) , randBuffer) ) {
 					angleNew[ i ][ j ] = aNew;
 				} else {
 					angleNew[ i ][ j ] = angle[ i ][ j ];

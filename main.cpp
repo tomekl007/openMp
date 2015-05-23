@@ -27,7 +27,6 @@ void showHistogram(long *h, int size, int width) {
 
 	int w;
 	double s = (double) width / (double) max;
-	#pragma omp parallel for schedule( static, 5 )
 	for (int i = 0; i < size; i++) {
 		w = (int) (h[i] * s);
 		cout << "|";
@@ -54,7 +53,6 @@ int main(void) {
 
 	double temperature = 101;
 	long *hPointer;
-	#pragma omp parallel for schedule( static, 5 )
 	for (int i = 0; i < REPETITIONS; i++) {
 		temperature -= 5;
 		cout << "Temperatura ........................................ "
