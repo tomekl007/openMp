@@ -37,7 +37,9 @@ void Simulation::init( void ) {
 
 	angle = new double* [ size ];
 	angleNew = new double* [ size ];
-	for ( int i = 0; i < size; i++ ) {
+	int i;
+	#pragma omp parallel for schedule(static) private(i)
+	for ( i = 0; i < size; i++ ) {
 		angle[ i ] = new double [ size ];
 		angleNew[ i ] = new double[ size ];
 	}
@@ -49,21 +51,25 @@ void Simulation::init( void ) {
 	//    show( &randBuffer );
 	// } // parallel
 
-
-
- 	#pragma omp parallel for schedule( dynamic ) private(randBuffer)
- 	for ( int i = 0; i < size; i++ )
-		for ( int j = 0; j < size; j++ ){
-			double randResult;
- 			drand48_r(&randBuffer, &randResult);
-			angle[ i ][ j ] = ( 2.0 * randResult - 1.0 ) * M_PI; // od -pi do +pi
-		}
-
+	int sizeInner = size;
+	
+	#pragma omp parallel private(randBuffer) shared(sizeInner)
+	{
+		int j, i;
+		srand48_r(time(NULL), &randBuffer );
+		 	#pragma omp parallel for schedule( dynamic ) private(randBuffer,j,i)
+		 	for ( i = 0; i < sizeInner; i++ )
+				for ( j = 0; j < sizeInner; j++ ){
+					double randResult;
+		 			drand48_r(&randBuffer, &randResult);
+					angle[ i ][ j ] = ( 2.0 * randResult - 1.0 ) * M_PI; // od -pi do +pi
+				}
+	}
 	next = new int[ size ];
 	previous = new int[ size ];
 
- 	#pragma omp parallel for schedule( static ) private(randBuffer)
-	for ( int i = 1; i < size - 1; i++ ) {
+ 	#pragma omp parallel for schedule( static ) private(randBuffer, i)
+	for (i = 1; i < size - 1; i++ ) {
 		next[ i ] = i + 1;
 		previous[ i ] = i - 1;
 	}
@@ -100,28 +106,32 @@ void Simulation::setPhysics( Physics *_ph ) {
 
 void Simulation::calc( int steps ) {
 	struct drand48_data randBuffer;
- 	srand48_r(time(NULL), &randBuffer );
-	double a1, a2, a3, a4;
+ 	double a1, a2, a3, a4;
 	double aNew;
-	#pragma omp parallel for schedule( static ) private(randBuffer)
-	for ( int k = 0; k < steps; k++ ) {
-		for ( int i = 0; i < size; i++ )
-			for ( int j = 0; j < size; j++ ) {
-				a1 = angle[ previous[ i ] ][ j ];
-				a2 = angle[ next[ i ] ][ j ];
-				a3 = angle[ i ][ previous[ j ] ];
-				a4 = angle[ i ][ next[ j ] ];
-				double randResult;
-				drand48_r(&randBuffer, &randResult);
-				aNew = angle[ i ][ j ] + ( randResult - 0.5 );
-				if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ) , randBuffer) ) {
-					angleNew[ i ][ j ] = aNew;
-				} else {
-					angleNew[ i ][ j ] = angle[ i ][ j ];
-				}
-			} // i,j
-		copyNewArray(); // angleNew -> angle
-	} // k
+	int k,i,j;
+	#pragma omp parallel private(randBuffer, k, i, j) shared(a1,a2,a3,a4,aNew)
+	{
+		srand48_r(time(NULL), &randBuffer );
+		#pragma omp for schedule( dynamic ) 
+		for ( k = 0; k < steps; k++ ) {
+			for ( i = 0; i < size; i++ )
+				for ( j = 0; j < size; j++ ) {
+					a1 = angle[ previous[ i ] ][ j ];
+					a2 = angle[ next[ i ] ][ j ];
+					a3 = angle[ i ][ previous[ j ] ];
+					a4 = angle[ i ][ next[ j ] ];
+					double randResult;
+					drand48_r(&randBuffer, &randResult);
+					aNew = angle[ i ][ j ] + ( randResult - 0.5 );
+					if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ) , randBuffer) ) {
+						angleNew[ i ][ j ] = aNew;
+					} else {
+						angleNew[ i ][ j ] = angle[ i ][ j ];
+					}
+				} // i,j
+			copyNewArray(); // angleNew -> angle
+		} // k
+	}
 }
 
 void Simulation::calcAngleHistogram( int bins ) {
@@ -164,6 +174,7 @@ double Simulation::getAngleAverageScalarProduct() {
 void Simulation::calcAngleAverageScalarProduct( double an ) {
 	double sum = 0.0;
 
+	#pragma omp for schedule( static ) 
 	for ( int i = 0; i < size; i++ )
 		for ( int j = 0; j < size; j++ )
 			sum += cos( angle[ i ][ j ] - an );
