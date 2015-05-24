@@ -117,22 +117,13 @@ cout << "!!!!!!!!!!"  << endl ;
  	double a1, a2, a3, a4;
 	double aNew;
 	int k,i,j;
-	//#pragma omp parallel private(randBuffer, k, i, j, a1,a2,a3,a4,aNew)
-	//{
+	
 		srand48_r(time(NULL), &randBuffer );
-		//#pragma omp parallel for schedule( dynamic ) private(k ) //collapse(3)
+		
 		for ( k = 0; k < steps; k++ ) {
 		#pragma omp parallel for private(randBuffer, i, j ,a1,a2,a3,a4,aNew) schedule(static) collapse(2)
 			for ( i = 0; i < size; i++ )
-		//		#pragma omp parallel for schedule( dynamic ) private(randBuffer, j, a1,a2,a3,a4,aNew)
-				//#pragma omp for schedule( dynamic ) //collapse(3)
-
-
-			//	#pragma omp parallel for private(randBuffer, j ,a1,a2,a3,a4,aNew)
 					for ( j = 0; j < size; j++ ) {
-						//cout << "--> thread number : " << omp_get_thread_num();
-			 			//cout << "- for : " << i << "," << j ;
-
 						a1 = angle[ previous[ i ] ][ j ];
 						a2 = angle[ next[ i ] ][ j ];
 						a3 = angle[ i ][ previous[ j ] ];
@@ -140,12 +131,8 @@ cout << "!!!!!!!!!!"  << endl ;
 						double randResult;
 						drand48_r(&randBuffer, &randResult);
 						aNew = angle[ i ][ j ] + ( randResult - 0.5 );
-						//b#pragma omp critical
-
-
-							//if(true){
-							//cout << "--> getProbability, : " << omp_get_thread_num() << " for " << i ", " << j << endl;
-							if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ) , randBuffer) ) {
+	
+						if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ) , randBuffer) ) {
 								angleNew[ i ][ j ] = aNew;
 							} else {
 								angleNew[ i ][ j ] = angle[ i ][ j ];
@@ -155,7 +142,6 @@ cout << "!!!!!!!!!!"  << endl ;
 			copyNewArray(); // angleNew -> angle
 		
 	} // k
- // }
 }
 
 //todo reduce
