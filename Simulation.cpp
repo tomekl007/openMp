@@ -120,7 +120,7 @@ cout << "!!!!!!!!!!"  << endl ;
 		srand48_r(time(NULL), &randBuffer );
 		
 		for ( int k = 0; k < steps; k++ ) {
-		#pragma omp parallel for private(randBuffer ,a1,a2,a3,a4,aNew) schedule(static) collapse(2)
+		#pragma omp parallel for firstprivate( randBuffer ) private (a1,a2,a3,a4,aNew) schedule(static) collapse(2)
 			for ( int i = 0; i < size; i++ )
 					for ( int j = 0; j < size; j++ ) {
 						a1 = angle[ previous[ i ] ][ j ];
