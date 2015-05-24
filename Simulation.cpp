@@ -116,14 +116,13 @@ cout << "!!!!!!!!!!"  << endl ;
 	struct drand48_data randBuffer;
  	double a1, a2, a3, a4;
 	double aNew;
-	int k,i,j;
 	
 		srand48_r(time(NULL), &randBuffer );
 		
-		for ( k = 0; k < steps; k++ ) {
-		#pragma omp parallel for private(randBuffer, i, j ,a1,a2,a3,a4,aNew) schedule(static) collapse(2)
-			for ( i = 0; i < size; i++ )
-					for ( j = 0; j < size; j++ ) {
+		for ( int k = 0; k < steps; k++ ) {
+		#pragma omp parallel for private(randBuffer ,a1,a2,a3,a4,aNew) schedule(static) collapse(2)
+			for ( int i = 0; i < size; i++ )
+					for ( int j = 0; j < size; j++ ) {
 						a1 = angle[ previous[ i ] ][ j ];
 						a2 = angle[ next[ i ] ][ j ];
 						a3 = angle[ i ][ previous[ j ] ];
