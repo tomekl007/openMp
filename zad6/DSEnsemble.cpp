@@ -45,7 +45,9 @@ double DSEnsemble::calcAvrAngle() {
 }
 
 void DSEnsemble::evolve( int steps, double stepSize, int trials ) {
+
 	for (int k = 0; k < steps; k++) {
+		#pragma omp parallel for schedule(static)
 		for (int i = 0; i < size; i++)
 			ds[i]->tryToMove( stepSize, trials );
 		for (int i = 0; i < size; i++)
