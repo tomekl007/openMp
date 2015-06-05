@@ -112,13 +112,13 @@ void Simulation::setPhysics( Physics *_ph ) {
 void Simulation::calc( int steps ) {
 	double a1, a2, a3, a4;
 	double aNew;
-	#pragma omp parallel
+	#pragma omp parallel private(a1, a2, a3, a4, aNew)
 	{
 		struct drand48_data randBuffer;
 		long long seed = (1202107158 + (omp_get_thread_num()) * 1999);
 		srand48_r(seed, &randBuffer );
 		for ( int k = 0; k < steps; k++ ) {
-			#pragma omp for collapse(2) private(randBuffer, a1, a2, a3, a4, aNew)
+			#pragma omp for collapse(2)
 			for ( int i = 0; i < size; i++ )
 				for ( int j = 0; j < size; j++ ) {
 					a1 = angle[ previous[ i ] ][ j ];
@@ -153,8 +153,8 @@ void Simulation::calcAngleHistogram( int bins ) {
 
 	int bin;
 	int mult;
-	int i,j;
-	//#pragma omp parallel for schedule( dynamic ) private(i,j, mult, bin) shared(pi2, s) // collapse(2)
+	
+   #pragma omp parallel for schedule( dynamic ) private(mult, bin) shared(pi2, s) // collapse(2)
 	for ( int i = 0; i < size; i++ )
 		for ( int j = 0; j < size; j++ ) {
 			mult = (int)( angle[ i ][ j ] / pi2 );
@@ -168,7 +168,10 @@ void Simulation::calcAngleHistogram( int bins ) {
 				bin = size - 1;
 				cout << "H!" << endl; // takze na wszelki wypadek
 			}
-			histogram[ bin ]++;
+			#pragma omp critical
+			{
+				histogram[ bin ]++;
+			}	
 		}
 }
 
@@ -180,15 +183,12 @@ double Simulation::getAngleAverageScalarProduct() {
 	return averageAngle;
 }
 
-//todo reduce
 void Simulation::calcAngleAverageScalarProduct( double an ) {
 	double sum = 0.0;
-	int i,j;
-
- //#pragma omp parallel for schedule(static) private(i, j) \
-//        reduction(+ : sum) //collapse(2)
-	for (i = 0; i < size; i++ )
-		for (j = 0; j < size; j++ )
+	
+ #pragma omp parallel for schedule(static) reduction(+ : sum) //collapse(2)
+	for (int i = 0; i < size; i++ )
+		for (int j = 0; j < size; j++ )
 			sum += cos( angle[ i ][ j ] - an );
 
 	averageAngle = sum / ( size * size );
