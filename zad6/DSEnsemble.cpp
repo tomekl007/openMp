@@ -7,6 +7,7 @@
 
 #include "DSEnsemble.h"
 #include <math.h>
+#include<iostream>
 
 DSEnsemble::DSEnsemble( DrunkenSailor **_ds, int _size ) {
 	ds = _ds;
@@ -21,6 +22,7 @@ DSEnsemble::~DSEnsemble() {
 double DSEnsemble::calcAvrDistanceFromStart() {
 	double d = 0;
 
+	#pragma omp parallel for reduction (+ : d)
 	for (int i = 0; i < size; i++) {
 		d += ds[i]->getDistanceFromStart();
 	}
@@ -37,6 +39,7 @@ double DSEnsemble::roundAngle( double angle ) {
 double DSEnsemble::calcAvrAngle() {
 	double sum = 0.0;
 
+	#pragma omp parallel for reduction (+ : sum)
 	for ( int i = 0; i < size; i++ ) {
 		sum += roundAngle( ds[i]->getAngle( ) );
 	}
@@ -45,12 +48,15 @@ double DSEnsemble::calcAvrAngle() {
 }
 
 void DSEnsemble::evolve( int steps, double stepSize, int trials ) {
-
+	//cout << "evolve";
 	for (int k = 0; k < steps; k++) {
-		#pragma omp parallel for schedule(static)
+		#pragma omp parallel for 
 		for (int i = 0; i < size; i++)
 			ds[i]->tryToMove( stepSize, trials );
+
+		#pragma omp parallel for 
 		for (int i = 0; i < size; i++)
 			ds[i]->copyNewPosition();
+
 	}
 }

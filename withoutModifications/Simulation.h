@@ -23,7 +23,7 @@ private:
 	double averageAngle;
 
 	void copyNewArray();
-	bool useNew( double p, double randomValue );
+	bool useNew( double p );
 	void init( void );
 	const int size;
 public:

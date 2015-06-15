@@ -8,7 +8,7 @@
 #include "DrunkenSailor.h"
 #include <cstddef>
 #include <math.h>
-#include <iostream>
+#include<iostream>
 #include <omp.h>
 
 using namespace std;
@@ -46,46 +46,24 @@ bool DrunkenSailor::collision() {
 }
 
 void DrunkenSailor::tryToMove( double stepSize, int trials ) {
-	//#pragma omp parallel
-	//{
-		//cout << "threadNr : " << omp_get_thread_num() << endl;
-		struct drand48_data randBuffer;
-		long long seed = (1202107158 + (omp_get_thread_num()) * 1999);
-		srand48_r(seed, &randBuffer );
+//cout <<"tryMove";
 		double newAngle;
-		// bool abort = false;
-
-		// #pragma omp for private(randBuffer, newAngle, abort)
 		for ( int i = 0; i < trials; i++ ) {
-
-			// #pragma omp flush (abort)	
-			// if(!abort){
-				// #pragma omp critical
 				if ( newPosition != NULL ) delete newPosition;       // odzysk pamieci z poprzedniej iteracji petli
 
 				double resultRand;
 				drand48_r(&randBuffer, &resultRand);
 				newAngle = angle + ( gen->get( resultRand ) - 0.5 ) * 2.0 * M_PI; // generowanie nowego kierunku ruchu
 
-		//		newAngle = angle; // to wylacza losowanie kierunku - wygodne do testow!
-				// #pragma omp critical
-				// {
+
 					newPosition = position->newPoint( stepSize, newAngle ); // generowanie nowego polozenia
 					if ( !collision() ) { // jesli nie ma zderzenia z innym marynarzem, to OK
 						angle = newAngle; // zapamietujemy nowy kierunek ruchu
 						return;
-						// abort = true;
-						// #pragma omp flush (abort)
 					}
-				// }	
 			}
 		
-		// nie udalo sie niczego wymyslec!
-		// #pragma omp critical
-		// {
 			delete newPosition;
 			newPosition = new Point2D( position );  // nowa pozycja == stara pozycja
-		// }
-//	}
 }
 

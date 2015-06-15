@@ -44,6 +44,7 @@ int main() {
 		y = circleSize * sin( angle );
 
 		ds[i] = new DrunkenSailor( x, y, angle + M_PI );
+//		cout << " id: " << i ;
 		ds[i]->setSailors(ds, SAILORS, i, SAILOR_SIZE );
 		ds[i]->setCDF( cdf );
 	}

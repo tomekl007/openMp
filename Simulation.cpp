@@ -94,10 +94,8 @@ void Simulation::copyNewArray() {
 			angle[ i ][ j ] = angleNew[ i ][ j ];
 }
 
-bool Simulation::useNew( double p, struct drand48_data randBuffer) {
-	double randResult;
- 	drand48_r(&randBuffer, &randResult);
- 	if ( randResult < p ) return true;
+bool Simulation::useNew( double p, double randomValue ) {
+	if ( randomValue < p ) return true;
 	return false;
 }
 
@@ -129,7 +127,7 @@ void Simulation::calc( int steps ) {
 		
 					drand48_r(&randBuffer, &resultRand);
 					aNew = angle[ i ][ j ] + ( resultRand - 0.5 );
-					if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ), randBuffer ) ) {
+					if ( useNew( ph->getProbability( a1, a2, a3, a4, angle[ i ][ j ], aNew ), resultRand ) ) {
 						angleNew[ i ][ j ] = aNew;
 					} else {
 						angleNew[ i ][ j ] = angle[ i ][ j ];
@@ -140,7 +138,7 @@ void Simulation::calc( int steps ) {
 	} // parallel
 }
 
-//todo reduce
+//todo reduce -> test not helped
 void Simulation::calcAngleHistogram( int bins ) {
 	double pi2 = 2.0 * M_PI;
 	double s = bins / pi2;
@@ -168,10 +166,9 @@ void Simulation::calcAngleHistogram( int bins ) {
 				bin = size - 1;
 				cout << "H!" << endl; // takze na wszelki wypadek
 			}
-			#pragma omp critical
-			{
-				histogram[ bin ]++;
-			}	
+			#pragma omp atomic
+			histogram[ bin ]++;
+				
 		}
 }
 

@@ -9,6 +9,7 @@
 #define DRUNKENSAILOR_H_
 
 #include <stdlib.h>
+#include <iostream>
 #include "Point2D.h"
 #include "Generator.h"
 #include "CumulativeDistributionFunction.h"
@@ -20,6 +21,7 @@ private:
 	Point2D *startPosition;
 	Generator *gen;
 
+	struct drand48_data randBuffer;
 	double angle;
 	int id; // identyfikator marynarza
 	int size; // rozmiar tablicy z marynarzami
@@ -34,8 +36,7 @@ public:
 		size = _size;
 		id = _id;
 		sailorSize = _sailorSize;
-		srand48( 1234L * id ); // kazdy marynarz moze miec wlasny generator - male przygotowanie na wersje rownolegla
-		// dla kodu sekwencyjnego to nie zadziala
+		srand48_r(1234L + id * 4015, &randBuffer);
 	}
 
 	void setCDF( CumulativeDistributionFunction * cdf ) {
